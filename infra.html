@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conecta Mobility - Dashboard de Gestión de Equipos TI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #1a2a4f;
+            --secondary-color: #2c3e66;
+            --accent-color: #00a8b5;
+            --accent-light: #00c4d4;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #f8f9fc;
+            --text-dark: #2c3e50;
+            --text-light: #6c757d;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Pantalla de login */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            position: relative;
+            overflow-y: auto;
+        }
+        
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('https://tironi.cl/images/default-source/tironibrands/proyectos/conecta-mobility/tb---proyectos-(img)---conecta-mobility.png?sfvrsn=82af56d0_1') center/cover no-repeat;
+            opacity: 0.08;
+            pointer-events: none;
+        }
+        
+        .login-box {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+            animation: fadeInUp 0.5s ease;
+            margin: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-logo {
+            max-width: 180px;
+            margin-bottom: 20px;
+        }
+        
+        .login-header h3 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .login-header p {
+            color: var(--text-light);
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(0,168,181,0.1);
+        }
+        
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--accent-color), var(--accent-light));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,168,181,0.4);
+        }
+        
+        .error-message {
+            background: #fee;
+            color: var(--danger-color);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            display: none;
+        }
+        
+        /* Dashboard principal */
+        .dashboard-main {
+            display: none;
+            height: 100vh;
+            overflow: hidden;
+            background: var(--light-bg);
+        }
+        
+        /* Barra superior con imagen de fondo */
+        .top-bar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            padding: 0.6rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            flex-wrap: wrap;
+            gap: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .top-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('https://tironi.cl/images/default-source/tironibrands/proyectos/conecta-mobility/tb---proyectos-(img)---conecta-mobility.png') right center/contain no-repeat;
+            opacity: 0.08;
+            pointer-events: none;
+        }
+        
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .logo-area img {
+            height: 40px;
+            filter: brightness(0) invert(1);
+        }
+        
+        .logo-area h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .upload-area {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(255,255,255,0.12);
+            padding: 0.4rem 1rem;
+            border-radius: 50px;
+            backdrop-filter: blur(5px);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .upload-area input[type="file"] { display: none; }
+        
+        .upload-label {
+            background: var(--accent-color);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .upload-label:hover {
+            background: var(--accent-light);
+            transform: translateY(-2px);
+        }
+        
+        .stats-badge { display: flex; gap: 0.8rem; }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            background: rgba(255,255,255,0.15);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            background: rgba(255,255,255,0.15);
+            padding: 0.3rem 1rem;
+            border-radius: 30px;
+        }
+        
+        .btn-logout {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 0.2rem 0.7rem;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-logout:hover { background: var(--danger-color); }
+        
+        /* Dashboard cards */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            padding: 1rem 2rem 0 2rem;
+        }
+        
+        .card-dashboard {
+            background: white;
+            border-radius: 15px;
+            padding: 1rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+            border-left: 4px solid var(--accent-color);
+        }
+        
+        .card-dashboard:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+        
+        .card-header-dashboard {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.6rem;
+        }
+        
+        .card-header-dashboard h6 {
+            margin: 0;
+            color: var(--text-dark);
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        .card-header-dashboard i { font-size: 1.3rem; color: var(--accent-color); }
+        .card-value { font-size: 1.8rem; font-weight: bold; color: var(--primary-color); margin-bottom: 0.2rem; }
+        .card-sub { color: var(--text-light); font-size: 0.7rem; }
+        
+        /* Sucursales */
+        .sucursales-container {
+            background: white;
+            border-radius: 15px;
+            padding: 0.6rem 1.2rem;
+            margin: 0 2rem 0.8rem 2rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+        
+        .badge-sucursal {
+            background: linear-gradient(135deg, var(--accent-color), var(--accent-light));
+            color: white;
+            padding: 4px 14px;
+            border-radius: 25px;
+            margin: 3px;
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .badge-sucursal:hover { transform: translateY(-1px); opacity: 0.9; }
+        
+        /* Búsqueda */
+        .search-bar {
+            background: white;
+            border-radius: 15px;
+            padding: 0.6rem 1.2rem;
+            margin: 0 2rem 0.8rem 2rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .search-input {
+            flex: 1;
+            border: 2px solid #e0e0e0;
+            border-radius: 30px;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .search-input:focus { outline: none; border-color: var(--accent-color); }
+        
+        /* Acciones */
+        .actions-bar {
+            background: white;
+            border-radius: 15px;
+            padding: 0.6rem 1.2rem;
+            margin: 0 2rem 0.8rem 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+        
+        .btn-action {
+            border-radius: 8px;
+            padding: 0.4rem 0.9rem;
+            font-weight: 500;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        
+        .btn-action:hover { transform: translateY(-2px); }
+        .btn-danger-custom { background: linear-gradient(135deg, var(--danger-color), #c0392b); color: white; }
+        .record-count { background: var(--light-bg); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.75rem; color: var(--text-dark); font-weight: 500; }
+        
+        /* Tabla - MÁS ALTA */
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            margin: 0 2rem 0.8rem 2rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            overflow: hidden;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .table-wrapper {
+            overflow-x: auto;
+            overflow-y: auto;
+            flex: 1;
+            max-height: calc(100vh - 310px);
+        }
+        
+        table {
+            font-size: 11px;
+            width: 100%;
+            margin-bottom: 0;
+            table-layout: fixed;
+            border-collapse: collapse;
+        }
+        
+        thead { position: sticky; top: 0; z-index: 30; }
+        
+        th {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white !important;
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            padding: 10px 6px !important;
+            font-weight: 600;
+            white-space: nowrap;
+            font-size: 10px;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+        }
+        
+        th.resizable::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            background: rgba(255,255,255,0.3);
+            cursor: col-resize;
+        }
+        
+        td {
+            padding: 6px 6px !important;
+            vertical-align: middle;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 11px;
+        }
+        
+        .edit-mode tbody tr { cursor: pointer; }
+        .edit-mode tbody tr:hover { background-color: #fff3cd !important; }
+        .edit-mode tbody tr.fila-seleccionada {
+            background: linear-gradient(90deg, #fff9e6, #fff3cd) !important;
+            border-left: 3px solid var(--warning-color);
+        }
+        
+        .edit-mode input {
+            background: white;
+            border: 2px solid var(--accent-color);
+            border-radius: 4px;
+            padding: 3px 5px;
+            width: 100%;
+            font-size: 10px;
+        }
+        
+        .btn-flotante {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-color), var(--accent-light));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 1000;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,168,181,0.4);
+        }
+        
+        .btn-flotante:hover { transform: scale(1.1); }
+        
+        .modal-content { border-radius: 15px; }
+        .modal-header { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; border-radius: 15px 15px 0 0; }
+        .highlight { background-color: rgba(0,168,181,0.2); border-radius: 2px; padding: 0 2px; }
+        
+        .main-layout {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 65px);
+            overflow: hidden;
+        }
+        
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        @media (max-width: 768px) {
+            .top-bar { flex-direction: column; align-items: stretch; padding: 0.8rem; }
+            .dashboard-cards, .sucursales-container, .search-bar, .actions-bar, .table-container { margin-left: 0.8rem; margin-right: 0.8rem; }
+            .dashboard-cards { padding: 0.5rem; }
+            .btn-action { padding: 0.3rem 0.6rem; font-size: 0.7rem; }
+            .table-wrapper { max-height: calc(100vh - 380px); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Pantalla de Login -->
+    <div id="loginContainer" class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <img src="https://tironi.cl/images/default-source/tironibrands/proyectos/conecta-mobility/tb---proyectos-(img)---conecta-mobility.png?sfvrsn=82af56d0_1" alt="Conecta Mobility" class="login-logo">
+                <h3>Dashboard TI</h3>
+                <p>Ingrese sus credenciales para acceder</p>
+            </div>
+            <div id="loginError" class="error-message">
+                <i class="fas fa-exclamation-circle"></i> Usuario o contraseña incorrectos
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-user"></i> Usuario</label>
+                <input type="text" id="loginUser" placeholder="Ingrese su usuario" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-lock"></i> Contraseña</label>
+                <input type="password" id="loginPass" placeholder="Ingrese su contraseña" onkeypress="if(event.key==='Enter') verificarLogin()">
+            </div>
+            <button class="btn-login" onclick="verificarLogin()">
+                <i class="fas fa-sign-in-alt"></i> Ingresar
+            </button>
+        </div>
+    </div>
+
+    <!-- Dashboard Principal -->
+    <div id="dashboardMain" class="dashboard-main">
+        <div class="top-bar">
+            <div class="logo-area">
+                <img src="https://tironi.cl/images/default-source/tironibrands/proyectos/conecta-mobility/tb---proyectos-(img)---conecta-mobility.png?sfvrsn=82af56d0_1" alt="Conecta Mobility">
+                <h2>Dashboard de Gestión de Equipos TI</h2>
+            </div>
+            
+            <div class="upload-area">
+                <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="cargarArchivo(this)">
+                <label for="fileInput" class="upload-label">
+                    <i class="fas fa-cloud-upload-alt"></i> Cargar Excel
+                </label>
+                <span class="file-name" id="fileName"><i class="fas fa-file-excel"></i> Sin archivo</span>
+                
+                <div class="stats-badge" id="statsBadge" style="display: none;">
+                    <span class="stat-item"><i class="fas fa-laptop"></i><span id="totalEquipos">0</span></span>
+                    <span class="stat-item"><i class="fas fa-building"></i><span id="totalSucursales">0</span></span>
+                </div>
+                
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="userNameDisplay"></span>
+                    <button class="btn-logout" onclick="cerrarSesion()"><i class="fas fa-sign-out-alt"></i> Salir</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="content-area">
+                <!-- Dashboard Cards -->
+                <div class="dashboard-cards" id="dashboardCards" style="display: none;">
+                    <div class="card-dashboard"><div class="card-header-dashboard"><h6>Total Equipos</h6><i class="fas fa-desktop"></i></div><div class="card-value" id="totalEquiposCard">0</div><div class="card-sub">Equipos registrados</div></div>
+                    <div class="card-dashboard"><div class="card-header-dashboard"><h6>Sucursales</h6><i class="fas fa-store"></i></div><div class="card-value" id="totalSucursalesCard">0</div><div class="card-sub">Ubicaciones activas</div></div>
+                    <div class="card-dashboard"><div class="card-header-dashboard"><h6>Por Tipo</h6><i class="fas fa-laptop-code"></i></div><div class="card-value" id="tipoNotebook">0</div><div class="card-sub">Notebooks / Laptops</div><div class="card-value mt-1" id="tipoTorre">0</div><div class="card-sub">Torres / Desktop</div></div>
+                    <div class="card-dashboard"><div class="card-header-dashboard"><h6>Impresoras</h6><i class="fas fa-print" style="color: var(--accent-color);"></i></div><div class="card-value" id="totalImpresoras">0</div><div class="card-sub">Equipos de impresión</div><div class="mt-1 small" id="impresorasPorMarca"></div></div>
+                    <div class="card-dashboard"><div class="card-header-dashboard"><h6>Top Marcas</h6><i class="fas fa-chart-simple"></i></div><div id="topMarcasList" class="small"></div></div>
+                </div>
+
+                <!-- Sucursales -->
+                <div class="sucursales-container" id="sucursalesContainer" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-1"><small class="fw-bold"><i class="fas fa-store-alt me-1"></i>Sucursales</small><span class="badge bg-secondary" id="totalSucursalesBadge">0</span></div>
+                    <div id="listaSucursales" class="d-flex flex-wrap gap-1"></div>
+                </div>
+
+                <!-- Búsqueda -->
+                <div class="search-bar"><i class="fas fa-search" style="color: var(--accent-color);"></i><input type="text" class="search-input" id="buscarGlobal" placeholder="Buscar en todas las columnas..." oninput="filtrarTablaGlobal()"><span class="search-info"><i class="fas fa-globe"></i> Búsqueda global</span></div>
+
+                <!-- Acciones -->
+                <div class="actions-bar">
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-success btn-action" onclick="habilitarEdicion()"><i class="fas fa-edit"></i> Editar</button>
+                        <button class="btn btn-primary btn-action" onclick="guardarCambios()"><i class="fas fa-save"></i> Guardar</button>
+                        <button class="btn btn-warning btn-action" onclick="cancelarEdicion()"><i class="fas fa-undo-alt"></i> Cancelar</button>
+                        <button class="btn btn-info btn-action" onclick="exportarExcel()"><i class="fas fa-file-export"></i> Exportar</button>
+                        <button class="btn btn-success btn-action" onclick="abrirModalAgregar()"><i class="fas fa-plus-circle"></i> Agregar</button>
+                        <button class="btn btn-danger-custom btn-action" onclick="eliminarTodosRegistros()"><i class="fas fa-trash-alt"></i> Eliminar Todos</button>
+                    </div>
+                    <div class="record-count"><i class="fas fa-list me-1"></i><span id="registrosMostrados">0</span> / <span id="totalRegistros">0</span></div>
+                </div>
+
+                <!-- Tabla -->
+                <div class="table-container">
+                    <div class="table-wrapper">
+                        <table class="table" id="tablaDatos">
+                            <thead><tr id="tableHeaders"></tr></thead>
+                            <tbody id="tableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn-flotante" onclick="abrirModalAgregar()" title="Agregar nuevo registro"><i class="fas fa-plus"></i></button>
+
+    <!-- Modales -->
+    <div class="modal fade" id="modalAgregar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl"><div class="modal-content"><div class="modal-header"><h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Agregar Nuevo Registro</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body"><div class="mb-3"><label class="form-label fw-bold">Sucursal</label><div class="row g-2"><div class="col-md-8"><select class="form-select" id="selectSucursal"><option value="">-- Seleccionar sucursal existente --</option></select></div><div class="col-md-4"><input type="text" class="form-control" id="nuevaSucursal" placeholder="O nueva sucursal"></div></div></div>
+        <div class="row g-3"><div class="col-md-6"><label>NOMBRE EQUIPO</label><input type="text" class="form-control" id="nuevoNombreEquipo"></div><div class="col-md-6"><label>MODELO EQUIPO</label><input type="text" class="form-control" id="nuevoModeloEquipo"></div><div class="col-md-6"><label>CUENTA LOCAL</label><input type="text" class="form-control" id="nuevaCuentaLocal"></div><div class="col-md-6"><label>ETH/WIFI</label><input type="text" class="form-control" id="nuevoEthWifi"></div><div class="col-md-6"><label>IP PUBLICA</label><input type="text" class="form-control" id="nuevaIPPublica"></div><div class="col-md-6"><label>UBICACION</label><input type="text" class="form-control" id="nuevaUbicacion"></div><div class="col-md-6"><label>TIPO EQUIPO</label><input type="text" class="form-control" id="nuevoTipoEquipo"></div><div class="col-md-6"><label>S/N</label><input type="text" class="form-control" id="nuevaSerie"></div><div class="col-md-6"><label>S.O</label><input type="text" class="form-control" id="nuevoSO"></div><div class="col-md-6"><label>MONITOR 1</label><input type="text" class="form-control" id="nuevoMonitor1"></div><div class="col-md-6"><label>S/N MONITOR 1</label><input type="text" class="form-control" id="nuevoSnMonitor1"></div><div class="col-md-6"><label>MONITOR 2</label><input type="text" class="form-control" id="nuevoMonitor2"></div><div class="col-md-6"><label>S/N MONITOR 2</label><input type="text" class="form-control" id="nuevoSnMonitor2"></div><div class="col-md-6"><label>ANYDESK</label><input type="text" class="form-control" id="nuevoAnyDesk"></div><div class="col-md-6"><label>RUT</label><input type="text" class="form-control" id="nuevoRut"></div><div class="col-md-6"><label>ROL</label><input type="text" class="form-control" id="nuevoRol"></div><div class="col-12"><label>OBSERVACION</label><textarea class="form-control" id="nuevaObservacion" rows="2"></textarea></div></div></div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-success" onclick="agregarNuevoRegistro()">Guardar</button></div></div></div>
+    </div>
+
+    <div class="modal fade" id="modalConfirmarEliminar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body"><p>¿Está seguro que desea eliminar <strong>TODOS</strong> los registros?</p><p class="text-danger">Esta acción no se puede deshacer.</p></div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-danger" onclick="confirmarEliminarTodos()">Eliminar Todos</button></div></div></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Configuración de colores basada en la imagen
+        const COLORS = { primary: '#1a2a4f', secondary: '#2c3e66', accent: '#00a8b5', accentLight: '#00c4d4' };
+        
+        // Usuarios permitidos
+        const USERS = { 'admin': 'admin123', 'usuario': 'ti2024', 'invitado': 'invitado' };
+        
+        let datosOriginales = [], datosFiltrados = [], modoEdicion = false, filaSeleccionada = null, textoBusqueda = '';
+        
+        const columnas = ['NOMBRE EQUIPO', 'MODELO EQUIPO', 'CUENTA LOCAL', 'ETH/WIFI', 'IP PUBLICA', 'UBICACION', 'TIPO EQUIPO', 'S/N', 'S.O', 'MONITOR 1', 'S/N MONITOR 1', 'MONITOR 2', 'S/N MONITOR 2', 'ANYDESK', 'RUT', 'ROL', 'OBSERVACION', 'SUCURSAL'];
+
+        // Verificar login
+        window.verificarLogin = function() {
+            const user = document.getElementById('loginUser').value;
+            const pass = document.getElementById('loginPass').value;
+            if (USERS[user] && USERS[user] === pass) {
+                localStorage.setItem('userLogged', user);
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('dashboardMain').style.display = 'block';
+                document.getElementById('userNameDisplay').textContent = user;
+                cargarDatosIniciales();
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+                setTimeout(() => document.getElementById('loginError').style.display = 'none', 3000);
+            }
+        };
+        
+        window.cerrarSesion = function() {
+            localStorage.removeItem('userLogged');
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('dashboardMain').style.display = 'none';
+            document.getElementById('loginUser').value = '';
+            document.getElementById('loginPass').value = '';
+        };
+        
+        function guardarDatos() { localStorage.setItem('datosEquiposTI', JSON.stringify(datosOriginales)); }
+        
+        function cargarDatosIniciales() {
+            const saved = localStorage.getItem('datosEquiposTI');
+            if (saved) {
+                datosOriginales = JSON.parse(saved);
+                datosFiltrados = JSON.parse(JSON.stringify(datosOriginales));
+            } else {
+                const ejemplo = [
+                    {SUCURSAL: 'San Alfonso', 'NOMBRE EQUIPO': 'PC-JORGE', 'MODELO EQUIPO': 'HP EliteBook', 'CUENTA LOCAL': 'JORGE-GAETE', 'ETH/WIFI': 'WIFI', 'IP PUBLICA': '190.0.0.1', UBICACION: 'Mantenimiento', 'TIPO EQUIPO': 'Torre', 'S/N': '21L20014CL', 'S.O': 'W11 PRO', 'MONITOR 1': 'LG 22"', 'S/N MONITOR 1': 'LG001', 'MONITOR 2': '', 'S/N MONITOR 2': '', ANYDESK: '123456789', RUT: '12345678-9', ROL: 'Programador', OBSERVACION: ''},
+                    {SUCURSAL: 'Recoleta', 'NOMBRE EQUIPO': 'NB-ADMIN', 'MODELO EQUIPO': 'Dell Latitude', 'CUENTA LOCAL': 'ADMIN', 'ETH/WIFI': 'Eth', 'IP PUBLICA': '190.0.0.2', UBICACION: 'Oficina Central', 'TIPO EQUIPO': 'Notebook', 'S/N': '5CG4301XJF', 'S.O': 'W11 PRO', 'MONITOR 1': 'Dell 24"', 'S/N MONITOR 1': 'DELL001', 'MONITOR 2': '', 'S/N MONITOR 2': '', ANYDESK: '987654321', RUT: '87654321-0', ROL: 'Administrador', OBSERVACION: 'Equipo principal'},
+                    {SUCURSAL: 'Los Libertadores', 'NOMBRE EQUIPO': 'PC-VENTAS', 'MODELO EQUIPO': 'Lenovo ThinkCentre', 'CUENTA LOCAL': 'VENTAS01', 'ETH/WIFI': 'WIFI', 'IP PUBLICA': '190.0.0.3', UBICACION: 'Sala Ventas', 'TIPO EQUIPO': 'Torre', 'S/N': 'ABC123XYZ', 'S.O': 'W10 PRO', 'MONITOR 1': 'HP 21"', 'S/N MONITOR 1': 'HP001', 'MONITOR 2': 'HP 21"', 'S/N MONITOR 2': 'HP002', ANYDESK: '555555555', RUT: '11222333-4', ROL: 'Vendedor', OBSERVACION: ''},
+                    {SUCURSAL: 'Cerrillos', 'NOMBRE EQUIPO': 'PC-BODEGA', 'MODELO EQUIPO': 'HP ProDesk', 'CUENTA LOCAL': 'BODEGA01', 'ETH/WIFI': 'Eth', 'IP PUBLICA': '190.0.0.4', UBICACION: 'Bodega', 'TIPO EQUIPO': 'Torre', 'S/N': 'XYZ987ABC', 'S.O': 'W10 PRO', 'MONITOR 1': 'LG 19"', 'S/N MONITOR 1': 'LG002', 'MONITOR 2': '', 'S/N MONITOR 2': '', ANYDESK: '', RUT: '', ROL: 'Bodeguero', OBSERVACION: ''},
+                    {SUCURSAL: 'San Alfonso', 'NOMBRE EQUIPO': 'PRN-HP-LASER', 'MODELO EQUIPO': 'HP LaserJet', 'CUENTA LOCAL': 'IMPRESORA1', 'ETH/WIFI': 'Eth', 'IP PUBLICA': '190.0.0.100', UBICACION: 'Impresión', 'TIPO EQUIPO': 'Impresora', 'S/N': 'PRN001', 'S.O': '', 'MONITOR 1': '', 'S/N MONITOR 1': '', 'MONITOR 2': '', 'S/N MONITOR 2': '', ANYDESK: '', RUT: '', ROL: 'Impresora', OBSERVACION: 'Impresora LaserJet'}
+                ];
+                datosOriginales = JSON.parse(JSON.stringify(ejemplo));
+                datosFiltrados = JSON.parse(JSON.stringify(ejemplo));
+                guardarDatos();
+            }
+            actualizarUI();
+            mostrarTabla();
+            actualizarDashboard();
+        }
+        
+        function actualizarUI() {
+            document.getElementById('statsBadge').style.display = 'flex';
+            document.getElementById('sucursalesContainer').style.display = 'block';
+            document.getElementById('dashboardCards').style.display = 'grid';
+        }
+        
+        function actualizarDashboard() {
+            const total = datosOriginales.length;
+            const sucursales = [...new Set(datosOriginales.map(d => d.SUCURSAL))];
+            document.getElementById('totalEquiposCard').textContent = total;
+            document.getElementById('totalSucursalesCard').textContent = sucursales.length;
+            document.getElementById('totalEquipos').textContent = total;
+            document.getElementById('totalSucursales').textContent = sucursales.length;
+            document.getElementById('totalSucursalesBadge').textContent = sucursales.length;
+            document.getElementById('totalRegistros').textContent = total;
+            
+            let notebooks = 0, torres = 0, impresoras = 0;
+            const marcas = {};
+            datosOriginales.forEach(reg => {
+                const tipo = (reg['TIPO EQUIPO'] || '').toUpperCase();
+                if (tipo.includes('NOTEBOOK')) notebooks++;
+                else if (tipo.includes('IMPRESORA')) impresoras++;
+                else torres++;
+                const marca = (reg['MODELO EQUIPO'] || 'Sin Marca').split(' ')[0];
+                marcas[marca] = (marcas[marca] || 0) + 1;
+            });
+            document.getElementById('tipoNotebook').textContent = notebooks;
+            document.getElementById('tipoTorre').textContent = torres;
+            document.getElementById('totalImpresoras').textContent = impresoras;
+            
+            const topMarcas = Object.entries(marcas).sort((a,b) => b[1] - a[1]).slice(0, 4);
+            document.getElementById('topMarcasList').innerHTML = topMarcas.map(([m,c]) => `<div class="d-flex justify-content-between mb-1"><span>${m}</span><span class="fw-bold">${c}</span></div>`).join('') || '<div>No hay datos</div>';
+            
+            const lista = document.getElementById('listaSucursales');
+            lista.innerHTML = '';
+            sucursales.forEach(s => lista.innerHTML += `<span class="badge-sucursal" onclick="filtrarPorSucursal('${s}')">${s}</span>`);
+            
+            const select = document.getElementById('selectSucursal');
+            select.innerHTML = '<option value="">-- Seleccionar sucursal existente --</option>';
+            sucursales.forEach(s => select.innerHTML += `<option value="${s}">${s}</option>`);
+        }
+        
+        function mostrarTabla() {
+            const headersRow = document.getElementById('tableHeaders');
+            const tbody = document.getElementById('tableBody');
+            headersRow.innerHTML = '';
+            tbody.innerHTML = '';
+            
+            columnas.forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = col;
+                th.style.width = '120px';
+                headersRow.appendChild(th);
+            });
+            
+            datosFiltrados.forEach((fila, idx) => {
+                const tr = document.createElement('tr');
+                tr.onclick = function(e) { if (modoEdicion) { e.stopPropagation(); seleccionarFila(tr); } };
+                columnas.forEach(col => {
+                    const td = document.createElement('td');
+                    const val = fila[col] || '';
+                    if (modoEdicion) {
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.className = 'form-control form-control-sm';
+                        input.value = val;
+                        input.onchange = function(e) { fila[col] = e.target.value; };
+                        input.onclick = function(e) { e.stopPropagation(); seleccionarFila(tr); };
+                        td.appendChild(input);
+                    } else {
+                        if (textoBusqueda && val.toLowerCase().includes(textoBusqueda)) {
+                            td.innerHTML = val.replace(new RegExp(`(${textoBusqueda.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'), '<span class="highlight">$1</span>');
+                        } else td.textContent = val;
+                    }
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            document.getElementById('registrosMostrados').textContent = datosFiltrados.length;
+        }
+        
+        function seleccionarFila(el) {
+            document.querySelectorAll('#tableBody tr').forEach(row => row.classList.remove('fila-seleccionada'));
+            el.classList.add('fila-seleccionada');
+            filaSeleccionada = el;
+        }
+        
+        window.filtrarTablaGlobal = function() {
+            textoBusqueda = document.getElementById('buscarGlobal').value.toLowerCase().trim();
+            if (!textoBusqueda) datosFiltrados = [...datosOriginales];
+            else datosFiltrados = datosOriginales.filter(f => columnas.some(c => (f[c] || '').toString().toLowerCase().includes(textoBusqueda)));
+            mostrarTabla();
+            document.getElementById('registrosMostrados').textContent = datosFiltrados.length;
+        };
+        
+        window.filtrarPorSucursal = function(suc) {
+            document.getElementById('buscarGlobal').value = '';
+            textoBusqueda = '';
+            datosFiltrados = datosOriginales.filter(f => f['SUCURSAL'] === suc);
+            mostrarTabla();
+            document.getElementById('registrosMostrados').textContent = datosFiltrados.length;
+        };
+        
+        window.habilitarEdicion = function() { modoEdicion = true; document.querySelector('.table-container').classList.add('edit-mode'); mostrarTabla(); };
+        window.guardarCambios = function() { modoEdicion = false; document.querySelector('.table-container').classList.remove('edit-mode'); datosOriginales = datosFiltrados.map(f => ({...f})); guardarDatos(); mostrarTabla(); actualizarDashboard(); alert('✅ Cambios guardados permanentemente'); };
+        window.cancelarEdicion = function() { modoEdicion = false; document.querySelector('.table-container').classList.remove('edit-mode'); datosFiltrados = datosOriginales.map(f => ({...f})); document.getElementById('buscarGlobal').value = ''; textoBusqueda = ''; mostrarTabla(); };
+        
+        window.exportarExcel = function() {
+            if (!datosFiltrados.length) { alert('No hay datos'); return; }
+            const wb = XLSX.utils.book_new();
+            const sucursales = {};
+            datosFiltrados.forEach(f => { const s = f['SUCURSAL'] || 'Sin Sucursal'; if (!sucursales[s]) sucursales[s] = []; sucursales[s].push(f); });
+            Object.keys(sucursales).forEach(s => { const ws = XLSX.utils.json_to_sheet(sucursales[s]); XLSX.utils.book_append_sheet(wb, ws, s.substring(0, 31)); });
+            XLSX.writeFile(wb, `inventario_${new Date().toISOString().split('T')[0]}.xlsx`);
+            alert('✅ Exportado');
+        };
+        
+        window.eliminarTodosRegistros = function() { new bootstrap.Modal(document.getElementById('modalConfirmarEliminar')).show(); };
+        window.confirmarEliminarTodos = function() { datosOriginales = []; datosFiltrados = []; modoEdicion = false; document.querySelector('.table-container').classList.remove('edit-mode'); document.getElementById('buscarGlobal').value = ''; textoBusqueda = ''; guardarDatos(); actualizarUI(); mostrarTabla(); actualizarDashboard(); bootstrap.Modal.getInstance(document.getElementById('modalConfirmarEliminar')).hide(); alert('🗑️ Todos los registros eliminados'); };
+        
+        window.abrirModalAgregar = function() {
+            const modal = new bootstrap.Modal(document.getElementById('modalAgregar'));
+            document.getElementById('nuevaSucursal').value = '';
+            document.getElementById('selectSucursal').value = '';
+            ['NombreEquipo', 'ModeloEquipo', 'CuentaLocal', 'EthWifi', 'IPPublica', 'Ubicacion', 'TipoEquipo', 'Serie', 'SO', 'Monitor1', 'SnMonitor1', 'Monitor2', 'SnMonitor2', 'AnyDesk', 'Rut', 'Rol', 'Observacion'].forEach(c => { const el = document.getElementById(`nuevo${c}`); if (el) el.value = ''; });
+            modal.show();
+        };
+        
+        window.agregarNuevoRegistro = function() {
+            let suc = document.getElementById('selectSucursal').value;
+            const ns = document.getElementById('nuevaSucursal').value.trim();
+            if (ns) suc = ns;
+            if (!suc) { alert('⚠️ Seleccione o ingrese una sucursal'); return; }
+            const nuevo = {
+                'SUCURSAL': suc, 'NOMBRE EQUIPO': document.getElementById('nuevoNombreEquipo').value,
+                'MODELO EQUIPO': document.getElementById('nuevoModeloEquipo').value, 'CUENTA LOCAL': document.getElementById('nuevaCuentaLocal').value,
+                'ETH/WIFI': document.getElementById('nuevoEthWifi').value, 'IP PUBLICA': document.getElementById('nuevaIPPublica').value,
+                'UBICACION': document.getElementById('nuevaUbicacion').value, 'TIPO EQUIPO': document.getElementById('nuevoTipoEquipo').value,
+                'S/N': document.getElementById('nuevaSerie').value, 'S.O': document.getElementById('nuevoSO').value,
+                'MONITOR 1': document.getElementById('nuevoMonitor1').value, 'S/N MONITOR 1': document.getElementById('nuevoSnMonitor1').value,
+                'MONITOR 2': document.getElementById('nuevoMonitor2').value, 'S/N MONITOR 2': document.getElementById('nuevoSnMonitor2').value,
+                'ANYDESK': document.getElementById('nuevoAnyDesk').value, 'RUT': document.getElementById('nuevoRut').value,
+                'ROL': document.getElementById('nuevoRol').value, 'OBSERVACION': document.getElementById('nuevaObservacion').value
+            };
+            datosOriginales.push(nuevo);
+            datosFiltrados = [...datosOriginales];
+            guardarDatos();
+            actualizarUI();
+            mostrarTabla();
+            actualizarDashboard();
+            bootstrap.Modal.getInstance(document.getElementById('modalAgregar')).hide();
+            alert('✅ Registro agregado y guardado');
+        };
+        
+        window.cargarArchivo = function(input) {
+            const file = input.files[0];
+            if (!file) return;
+            document.getElementById('fileName').innerHTML = `<i class="fas fa-file-excel"></i> ${file.name}`;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    let todos = [];
+                    workbook.SheetNames.forEach(hoja => {
+                        const ws = workbook.Sheets[hoja];
+                        const jsonData = XLSX.utils.sheet_to_json(ws, {header: 1, defval: ''});
+                        if (jsonData.length > 1) {
+                            const headers = jsonData[0] || [];
+                            for (let i = 1; i < jsonData.length; i++) {
+                                const fila = jsonData[i];
+                                if (fila && fila.some(c => c && c.toString().trim() !== '')) {
+                                    let obj = { SUCURSAL: hoja };
+                                    headers.forEach((h, idx) => { if (h) obj[h.toString().toUpperCase().trim()] = fila[idx] || ''; });
+                                    columnas.forEach(col => { if (obj[col] === undefined) obj[col] = ''; });
+                                    todos.push(obj);
+                                }
+                            }
+                        }
+                    });
+                    if (todos.length) { datosOriginales = todos; datosFiltrados = [...todos]; guardarDatos(); actualizarUI(); mostrarTabla(); actualizarDashboard(); alert(`✅ Cargados ${todos.length} registros`); }
+                } catch(err) { alert('Error: ' + err.message); }
+            };
+            reader.readAsArrayBuffer(file);
+        };
+        
+        // Inicializar
+        const savedUser = localStorage.getItem('userLogged');
+        if (savedUser && USERS[savedUser]) {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('dashboardMain').style.display = 'block';
+            document.getElementById('userNameDisplay').textContent = savedUser;
+            cargarDatosIniciales();
+        }
+    </script>
+</body>
+</html>
